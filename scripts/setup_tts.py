@@ -5,9 +5,8 @@
 
     python scripts/setup_tts.py                      # NVIDIA GPU on Windows / Linux (CUDA 12.8 torch)
     python scripts/setup_tts.py --cpu                # no GPU: CPU torch (slow, for testing)
-    python scripts/setup_tts.py --hf-token hf_xxx    # or HF_TOKEN=..., or `hf auth login`; without any of them it
-                                                     # asks for the token (hidden) when run in a console
-    python scripts/setup_tts.py --skip-voice         # everything except the gated voice download
+    python scripts/setup_tts.py --accept-voice-license   # unattended: accept Sakura's voice license up front
+    python scripts/setup_tts.py --skip-voice         # everything except the voice download
     python scripts/setup_tts.py --self-test          # also start the server once and synthesize a line
 
 What it builds in vendor/tts-engine/ (everything but main.py and the docs is git-ignored):
@@ -20,7 +19,8 @@ What it builds in vendor/tts-engine/ (everything but main.py and the docs is git
     nltk_data/              English POS tagger + CMUdict for the English front-end
     ffmpeg/                 ffmpeg + ffprobe for Opus output (optional: WAV works without it)
     Speakers/MekaHime_Sakura/
-                            Sakura's voice from the gated Hugging Face repo MekaHime/MekaHime_Sakura
+                            Sakura's voice from the Hugging Face repo MekaHime/MekaHime_Sakura (personal-use
+                            license, accepted when the script asks)
 
 Needs Python 3.11 or 3.12 (scipy, onnxruntime and matplotlib at the pinned versions have no wheels for 3.10, and
 upstream's numpy<2 has none for 3.13); Linux with glibc 2.28 or newer; macOS 14 or newer on Apple Silicon.
@@ -40,7 +40,6 @@ from __future__ import annotations
 
 import argparse
 import errno
-import getpass
 import hashlib
 import http.client
 import json
@@ -119,7 +118,7 @@ FFMPEG_LINUX_RELEASE = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases
 FFMPEG_LINUX_ASSET = re.compile(r"ffmpeg-n(\d+)\.(\d+)-latest-linux64-gpl-\1\.\2\.tar\.xz")
 
 VOICE_REPO, VOICE_ID = "MekaHime/MekaHime_Sakura", "MekaHime_Sakura"
-VOICE_REV = "f81065fa79c2a1fbeb14fd1ad4c81ae57cc6c022"    # 2026-10-25: 68 emotion tags, each with its clip
+VOICE_REV = "b047e59cf536123a1e798732f5f99cb06f21eb2d"    # 2026-10-25: 68 emotion tags, each with its clip; ungated
 VOICE_WEIGHTS = {  # at VOICE_REV: file -> (size, sha256)
     "MekaHime_Sakura.ckpt": (155305457, "031e141af0c024186eedf65cc3c090b7737981651cd5a67533efcfe4a3b5741d"),
     "MekaHime_Sakura.pth": (172755891, "7511dc7abe4cab63c24fe3c9cf1039875ddce43cfc876d68fd75ee84564d98bb"),
@@ -884,7 +883,8 @@ try:
 except ImportError:
     get_token = lambda: None
 tok = os.environ.get("HF_TOKEN") or get_token()
-print("[voice] Hugging Face token:", "from HF_TOKEN / --hf-token" if os.environ.get("HF_TOKEN") else ("from the cached `hf auth login`" if tok else "none"), flush=True)
+if tok:
+    print("[voice] using your Hugging Face token (" + ("HF_TOKEN / --hf-token" if os.environ.get("HF_TOKEN") else "`hf auth login`") + ")", flush=True)
 try:
     snapshot_download(repo_id=repo, revision=rev, local_dir=dest, token=tok or None)
 except GatedRepoError as e:
@@ -930,30 +930,24 @@ def check_voice(d: Path, ver: Verified) -> tuple[bool, Optional[bool], str]:
     return True, pinned, "; ".join(notes)
 
 
-def saved_hf_login() -> bool:
-    """True when `hf auth login` has stored a token where huggingface_hub looks for it."""
-    if os.environ.get("HF_TOKEN_PATH"):
-        return Path(os.environ["HF_TOKEN_PATH"]).expanduser().is_file()
-    cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
-    return (Path(os.environ.get("HF_HOME") or cache / "huggingface").expanduser() / "token").is_file()
-
-
-def ask_hf_token(gate: str) -> Optional[str]:
-    """Ask for a Hugging Face token on an interactive console (input hidden, used for this run only)."""
-    print(f"\n[voice] Sakura's voice is free, but the download is gated. Once:\n"
-          f"          1) open {gate} while logged in to Hugging Face, tick the boxes and click 'I agree'\n"
-          f"          2) create a token with the 'Read' role at {HF}/settings/tokens\n", flush=True)
+def ask_voice_license() -> bool:
+    """Show the voice license in short on an interactive console and ask once; True when accepted."""
+    print(f"\n[voice] Sakura's voice ({HF}/{VOICE_REPO}) is free under MekaHime's personal-use license:\n"
+          "          - personal, hobbyist use only, and you must be 18 or older\n"
+          "          - no training, fine-tuning or distilling other models on it, no re-hosting or resale\n"
+          "          - credit MekaHime visibly when you post videos or streams with her voice\n"
+          f"          full text: {HF}/{VOICE_REPO}/blob/main/LICENSE\n", flush=True)
     try:
-        tok = getpass.getpass("[voice] paste the token here (hidden; Enter skips the voice for now): ").strip()
+        answer = input("[voice] type yes to accept and download her voice (anything else skips it for now): ")
     except (EOFError, KeyboardInterrupt):
         print(flush=True)
-        return None
-    return tok or None
+        return False
+    return answer.strip().lower() in ("yes", "y")
 
 
 def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verified) -> None:
     dest = engine / "Speakers" / VOICE_ID
-    gate = f"{HF}/{VOICE_REPO}"
+    page = f"{HF}/{VOICE_REPO}"
     name = f"voice {VOICE_ID}"
     pinned_rev = args.voice_revision == VOICE_REV     # --voice-revision <other> downloads files the pins do not cover
     if args.voice_from:
@@ -971,7 +965,7 @@ def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verifie
     good, pinned, why = check_voice(dest, ver)
     if args.skip_voice:
         row("OK " if good else "-- ", name, f"{dest} ({why}; download skipped)" if good else
-            f"skipped (--skip-voice). Later: accept the license at {gate}, then re-run without --skip-voice")
+            f"skipped (--skip-voice). Later: re-run without --skip-voice and accept her license")
         return
     if good and not args.update_voice:
         if pinned is False and pinned_rev:
@@ -979,8 +973,11 @@ def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verifie
         else:
             row("OK ", name, f"{dest} (existing; {why})")
         return
-    log(f"downloading Sakura's voice from {gate} at revision {args.voice_revision[:12]} "
-        "(gated: accept the license on that page first)")
+    if not args.accept_voice_license:
+        row("!! ", name, "not downloaded: her voice license was not accepted. Re-run and type yes when asked, "
+            f"or pass --accept-voice-license (terms: {page}/blob/main/LICENSE)")
+        return
+    log(f"downloading Sakura's voice from {page} at revision {args.voice_revision[:12]}")
     env = dict(os.environ)
     if args.hf_token:
         env["HF_TOKEN"] = args.hf_token
@@ -988,11 +985,10 @@ def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verifie
     env.setdefault("HF_HUB_VERBOSITY", "error")   # failures are reported below in one line
     p = subprocess.run([str(vpy), "-I", "-c", HF_SNIPPET, VOICE_REPO, args.voice_revision, str(dest)], env=env)
     if p.returncode != 0:
-        msg = {3: "access not granted yet", 4: "not logged in or no access", 5: "network / HTTP error"}.get(
+        msg = {3: "the repository is gated", 4: "repository not found", 5: "network / HTTP error"}.get(
             p.returncode, f"exit code {p.returncode}")
-        row("!! ", name, f"download failed ({msg}). 1) open {gate} while logged in and click "
-            "'I agree'; 2) log in here: `hf auth login` (or set HF_TOKEN, or pass --hf-token); "
-            "3) re-run this script")
+        row("!! ", name, f"download failed ({msg}) from {page}. Check the internet connection and re-run "
+            "this script")
         return
     good, pinned, why = check_voice(dest, ver)
     bad = not good or (pinned is False and pinned_rev)
@@ -1175,7 +1171,9 @@ def main() -> int:
     ap.add_argument("--voice-revision", default=VOICE_REV,
                     help=f"revision of {VOICE_REPO} (default: the pinned {VOICE_REV[:8]}, whose weights are checked "
                          "by SHA-256)")
-    ap.add_argument("--hf-token", default=None, help="Hugging Face token (default: HF_TOKEN or the cached hf login; else asked for in a console)")
+    ap.add_argument("--accept-voice-license", action="store_true",
+                    help="accept Sakura's voice license (personal use, 18+) without being asked")
+    ap.add_argument("--hf-token", default=None, help="Hugging Face token (optional; Sakura's voice needs none)")
     ap.add_argument("--skip-ffmpeg", action="store_true")
     ap.add_argument("--reinstall", action="store_true", help="re-run the pip steps even if nothing changed")
     ap.add_argument("--keep-downloads", action="store_true", help="keep the zip archives in downloads/")
@@ -1197,9 +1195,9 @@ def main() -> int:
             "venv and the GPT-SoVITS tree can pass the 260-character limit. Use a shorter folder, or enable "
             "LongPathsEnabled (HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem) and re-run")
     voice_missing = args.update_voice or not (engine / "Speakers" / VOICE_ID / "character.json").is_file()
-    if (voice_missing and not (args.skip_voice or args.voice_from) and sys.stdin.isatty()
-            and not (args.hf_token or os.environ.get("HF_TOKEN") or saved_hf_login())):
-        args.hf_token = ask_hf_token(f"{HF}/{VOICE_REPO}")    # asked first, so the long install can run unattended
+    if (voice_missing and not (args.skip_voice or args.voice_from or args.accept_voice_license)
+            and sys.stdin.isatty()):
+        args.accept_voice_license = ask_voice_license()     # asked first, so the long install can run unattended
     t0 = time.time()
     rc = 0
     steps = Steps()

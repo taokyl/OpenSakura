@@ -3,7 +3,7 @@
 Sakura speaks through `main.py`, the **OpenSakura voice server, a MekaHime build of GPT-SoVITS (v2ProPlus)**.
 It is a small MIT-licensed server on top of an unmodified upstream
 [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) checkout. Everything else in this folder is assembled
-from public sources by `scripts/setup_tts.py`, and Sakura's voice comes from a gated Hugging Face repository.
+from public sources by `scripts/setup_tts.py`, and Sakura's voice comes from a Hugging Face repository.
 Only `main.py`, `requirements-tts.txt`, this README, `LICENSE` and `THIRD_PARTY_NOTICES.md` are in git.
 
 ## Install
@@ -33,16 +33,14 @@ speed inside the SoVITS decoder and never calls its ffmpeg-based `speed_change()
 it loads upstream; should a different upstream need ffmpeg for speed and none is found, it speaks at speed
 1.0 and says so in the `warning` field.
 
-**Sakura's voice** is the gated Hugging Face repository
-[MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura). Open that page while
-logged in to Hugging Face, accept the personal-use license (tick the boxes, "I agree"), then give the
-script a token in one of three ways: `hf auth login` once (any `huggingface_hub` install works, including
-`vendor/tts-engine/.venv/Scripts/hf` (Windows) or `.venv/bin/hf` after a first run), `HF_TOKEN=hf_...`, or
-`--hf-token hf_...`. The token
-is only passed to the download and is never written into the repository. Without access the script finishes
-everything else and tells you what to do; re-run it afterwards. The voice is downloaded at a pinned revision of
-that repository (`f81065fa`, 68 emotion tags) and its two weight files are checked by size and SHA-256 like
-every other download.
+**Sakura's voice** is the Hugging Face repository
+[MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura). No account or token is needed.
+It is under MekaHime's personal-use license (`LICENSE` in that repository: personal, hobbyist use, 18+, no
+training on it, no re-hosting or resale, visible credit): the script shows it in short before anything else and
+downloads the voice only after you type `yes`; `--accept-voice-license` accepts it up front for unattended
+installs. Without it the script finishes everything else and says how to get the voice. The voice is downloaded
+at a pinned revision of that repository (`b047e59c`, 68 emotion tags) and its two weight files are checked by
+size and SHA-256 like every other download.
 
 Re-running is safe: finished steps are verified (SHA-256) and skipped; a re-run of a complete install takes about
 10 s. A venv an earlier run left unfinished (no pip, or an interpreter that no longer starts) is created again;

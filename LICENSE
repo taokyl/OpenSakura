@@ -39,7 +39,7 @@ licenses:
   data and ffmpeg, each under its own license (see
   vendor/tts-engine/THIRD_PARTY_NOTICES.md); none of those files are in this
   repository. Sakura's voice model, fine-tuned weights and reference audio are
-  MekaHime Inc. assets distributed separately (gated Hugging Face repository
+  MekaHime Inc. assets distributed separately (Hugging Face repository
   MekaHime/MekaHime_Sakura) for personal, hobbyist use only: no
   distillation, training, extraction, resale or commercial use.
 - web/assets/avatar.vrm — Sakura's character model, created with VRoid Studio

@@ -8,9 +8,9 @@ pretrained models, the Python venv, ffmpeg and Sakura's voice are assembled from
 python scripts/setup_tts.py
 ```
 
-Sakura's voice is downloaded from the gated Hugging Face repository
-[MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura): accept its
-personal-use license on that page once, then log in (`hf auth login`) or pass `--hf-token`.
+Sakura's voice is downloaded from the Hugging Face repository
+[MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura) (no account needed) after you
+accept its personal-use license when the script asks.
 Install details, flags, layout and the package list are in [`tts-engine/README.md`](tts-engine/README.md).
 
 `launch.py` starts the server as one process on port 8002 (`tts.url`, `tts.engine_dir` and

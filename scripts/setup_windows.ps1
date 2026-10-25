@@ -36,8 +36,6 @@ if (-not (Test-Path 'config\settings.json')) { Copy-Item config\settings.example
 
 Write-Host ''
 Write-Host '[setup] done. Next:'
-Write-Host '  1. python scripts\setup_tts.py   (her voice. First, once: accept the terms at'
-Write-Host '     https://huggingface.co/MekaHime/MekaHime_Sakura and create a Read token at'
-Write-Host '     https://huggingface.co/settings/tokens; the script asks for it. README: Quick start)'
+Write-Host '  1. python scripts\setup_tts.py   (her voice; type yes to accept her personal-use license)'
 Write-Host '  2. .venv\Scripts\python launch.py --check'
 Write-Host '  3. Start_OpenSakura.bat  ->  http://localhost:8010'

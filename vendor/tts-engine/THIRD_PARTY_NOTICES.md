@@ -55,7 +55,7 @@ bundled Open JTalk dictionary, OpenCC, jieba, ...) are under their own licenses;
 
 ## Sakura's voice
 
-`Speakers/MekaHime_Sakura/` comes from the gated Hugging Face repository `MekaHime/MekaHime_Sakura`. It is
+`Speakers/MekaHime_Sakura/` comes from the Hugging Face repository `MekaHime/MekaHime_Sakura`. It is
 a MekaHime Inc. asset licensed for personal, hobbyist use only (no distillation, training, extraction,
 resale or commercial use); the full terms are in the `LICENSE` file that is downloaded with it. It is
 not covered by the MIT license of this folder.
