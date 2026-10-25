@@ -1,0 +1,39 @@
+# secrets + machine-local config
+.env
+config/settings.json
+
+# runtime data (memories, profiles, logs, audio cache)
+data/
+logs/
+*.log
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# downloaded weights
+services/stt/models/model.pt
+services/stt/models/*.part
+
+# voice engine: only the server code and its docs are in git. scripts/setup_tts.py builds the rest
+# (.venv/, GPT-SoVITS/, ffmpeg/, nltk_data/, Speakers/, cache/, downloads/) from public sources; a legacy
+# bundle's Runtime/, Data/ and Source/ folders stay out too.
+vendor/tts-engine/*
+!vendor/tts-engine/main.py
+!vendor/tts-engine/requirements-tts.txt
+!vendor/tts-engine/README.md
+!vendor/tts-engine/LICENSE
+!vendor/tts-engine/THIRD_PARTY_NOTICES.md
+
+# editor / os
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+._*
+
+# never commit the atomic-write temp file
+config/settings.json.tmp
+*.tmp

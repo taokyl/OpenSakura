@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSakura</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="css/app.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/",
+    "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.2/lib/three-vrm.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="top">
+  <a class="brand" href="https://www.mekahime.com" target="_blank" rel="noopener" title="MekaHime"><img src="assets/mekahime-logo.webp" alt="MekaHime"></a>
+  <span class="brand-sep">·</span><span id="brand-name">Sakura</span><span id="conn" class="dot off" title="backend"></span>
+  <div class="tabs">
+    <button class="tab active" data-tab="play">Play</button>
+    <button class="tab" data-tab="setup">Setup</button>
+    <button class="tab" data-tab="state">State</button>
+    <button class="tab" data-tab="about">About</button>
+  </div>
+  <div class="mode-pill" id="mode-pill">web</div>
+</div>
+<button id="btn-fullscreen" title="Fullscreen (F)">⛶</button>
+
+<aside id="panel">
+  <button id="panel-tab" title="hide the panel">❯</button>
+
+  <!-- ================= PLAY ================= -->
+  <section id="tab-play" class="tabpane active">
+    <div id="play-disabled" class="disabled-overlay hidden">
+      <div>Sakura is in <b>Discord mode</b>.<br>Switch to web mode in Setup to chat here.</div>
+    </div>
+    <div id="transcript"></div>
+    <div class="composer">
+      <input id="chat-input" type="text" placeholder="Say something to her…" autocomplete="off">
+      <button id="btn-send" class="primary">Send</button>
+    </div>
+    <div class="playbar">
+      <label><input type="checkbox" id="opt-bargein" checked> barge-in</label>
+      <label><input type="checkbox" id="opt-autoplay" checked> play voice</label>
+      <span id="play-status" class="muted"></span>
+    </div>
+  </section>
+
+  <!-- ================= SETUP ================= -->
+  <section id="tab-setup" class="tabpane">
+    <div class="card">
+      <h3>Mode</h3>
+      <div class="row">
+        <label class="radio"><input type="radio" name="mode" value="web"> Chat in this page</label>
+        <label class="radio"><input type="radio" name="mode" value="discord"> Chat in Discord</label>
+      </div>
+      <p class="muted small">Web mode talks to her here (mic/text). Discord mode runs the bot; the Play tab and mic are disabled.</p>
+    </div>
+
+    <div class="card">
+      <h3>Health <button class="link" id="btn-health">refresh</button></h3>
+      <div class="health" id="health-grid"></div>
+    </div>
+
+    <div class="card">
+      <h3>LLM</h3>
+      <div class="grid2">
+        <label>OpenRouter API key <span id="or-status" class="tag"></span>
+          <div class="inline"><input type="password" id="or-key" placeholder="sk-or-v1-…"><button id="btn-or-save">Save</button></div>
+        </label>
+        <label>Ollama URL <span id="ol-status" class="tag"></span>
+          <div class="inline"><input type="text" id="ol-url"><button id="btn-ol-test">Test</button></div>
+        </label>
+      </div>
+      <div class="inline"><input type="text" id="ol-pull" placeholder="ollama model to pull, e.g. qwen3:8b"><button id="btn-ol-pull">Pull</button></div>
+      <table class="roles">
+        <thead><tr><th>role</th><th>provider</th><th>OpenRouter model</th><th>Ollama model</th></tr></thead>
+        <tbody id="roles-body"></tbody>
+      </table>
+      <div class="right"><button id="btn-llm-save" class="primary">Save LLM</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Speech</h3>
+      <div class="grid2">
+        <fieldset><legend>STT — SenseVoice (MekaHime build) <span id="stt-status" class="tag"></span></legend>
+          <label class="check"><input type="checkbox" id="stt-enabled"> enabled</label>
+          <label>URL <input type="text" id="stt-url"></label>
+          <label>language <select id="stt-lang"><option>auto</option><option>zh</option><option>en</option><option>yue</option><option>ja</option><option>ko</option></select></label>
+        </fieldset>
+        <fieldset><legend>TTS — GPT-SoVITS (MekaHime build) <span id="tts-status" class="tag"></span></legend>
+          <label class="check"><input type="checkbox" id="tts-enabled"> enabled</label>
+          <label>URL <input type="text" id="tts-url"></label>
+          <label>voice <select id="tts-char"></select></label>
+          <label>language <select id="tts-lang"><option>English</option><option>Chinese</option><option>Japanese</option></select></label>
+          <div class="inline"><input type="text" id="tts-test-text" value="Hi! I'm Sakura. Can you hear me?"><button id="btn-tts-test">Say</button></div>
+        </fieldset>
+      </div>
+      <div class="right"><button id="btn-speech-save" class="primary">Save speech</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Reply behaviour</h3>
+      <div class="toggles" id="reply-toggles"></div>
+      <div class="row">
+        <label>Discord trigger (Discord mode, coming soon)
+          <select id="discord-trigger"><option value="all">reply to all text</option><option value="mention">only when mentioned / selected</option><option value="smart">smart (SLM gate)</option></select>
+        </label>
+      </div>
+      <div class="right"><button id="btn-reply-save" class="primary">Save behaviour</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Discord <span id="dc-status" class="tag"></span></h3>
+      <div class="inline"><input type="password" id="dc-token" placeholder="bot token"><button id="btn-dc-save">Save token</button></div>
+      <div class="grid2">
+        <label>guild id <input type="text" id="dc-guild"></label>
+        <label>channel ids (comma) <input type="text" id="dc-channels"></label>
+        <label>stage channel id <input type="text" id="dc-stage"></label>
+        <label>error channel id <input type="text" id="dc-error"></label>
+      </div>
+      <div class="right"><button id="btn-dc-settings-save" class="primary">Save Discord</button></div>
+    </div>
+
+    <div class="card">
+      <h3>Persona</h3>
+      <label>name <input type="text" id="p-name"></label>
+      <label>description <textarea id="p-desc" rows="2"></textarea></label>
+      <label>traits (comma) <input type="text" id="p-traits"></label>
+      <label>quirks (comma) <input type="text" id="p-quirks"></label>
+      <label>base prompt <textarea id="p-base" rows="6"></textarea></label>
+      <div class="right"><button id="btn-persona-save" class="primary">Save persona</button></div>
+    </div>
+
+    <div class="card danger">
+      <h3>Danger</h3>
+      <button id="btn-reset">Wipe memory, profiles and emotions</button>
+      <button id="btn-unhalt">Un-halt</button>
+    </div>
+  </section>
+
+  <!-- ================= STATE ================= -->
+  <section id="tab-state" class="tabpane">
+    <div class="card">
+      <h3>Now <span id="dominant" class="tag"></span></h3>
+      <div id="emotions"></div>
+    </div>
+    <div class="card">
+      <h3>Relationship</h3>
+      <div id="relationship" class="muted"></div>
+    </div>
+    <div class="card">
+      <h3>Cost <span id="usage-account" class="tag"></span><button class="link" id="btn-usage-reset">reset session</button></h3>
+      <div id="usage"></div>
+    </div>
+    <div class="card">
+      <h3>Last turn</h3>
+      <div id="lastturn" class="muted small"></div>
+      <div id="actions-log" class="muted small"></div>
+    </div>
+    <div class="card">
+      <h3>Avatar</h3>
+      <div class="row">
+        <select id="clip-select"></select><button id="btn-clip-play">Play clip</button>
+      </div>
+      <div class="row">
+        <select id="expr-select"><option>neutral</option><option>happy</option><option>angry</option><option>sad</option><option>relaxed</option><option>surprised</option></select>
+        <button id="btn-expr">Expression</button>
+      </div>
+      <div id="avatar-status" class="muted small"></div>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section id="tab-about" class="tabpane about">
+    <div class="card">
+      <h3>About MekaHime</h3>
+      <a class="about-logo" href="https://www.mekahime.com" target="_blank" rel="noopener" title="mekahime.com"><img src="assets/mekahime-logo.webp" alt="MekaHime"></a>
+      <p>We are a small team of anime and AI-lovers who want to bring AI waifus to life.</p>
+    </div>
+
+    <div class="card donate-card">
+      <a class="donate-giant" href="https://www.mekahime.com/donate" target="_blank" rel="noopener">♥ Support MekaHime</a>
+      <p class="donate-sub">We believe AI waifu is for everyone. They should not be locked behind a paywall.</p>
+      <p class="donate-sub">Sakura is 100% open sourced so you can run her locally with controls to all of your private information. But this means we aren't earning a single dollar, so please consider donating to keep this project alive.</p>
+    </div>
+
+    <div class="card age">
+      <h3>18+ only</h3>
+      <p>Sakura is <b>capable of NSFW</b> conversation. You must be <b>at least 18 years old</b>, or the age of majority in
+        your country and region if that is higher, to use this software. By running it you confirm that you are.</p>
+    </div>
+
+    <div class="card">
+      <h3>About Sakura</h3>
+      <p><b>Sakura</b> is MekaHime's first prototype, now <b>open source</b>. She runs on your own machine: a brain with a
+        26-emotion mood, favorability and per-user memory; a voice (a MekaHime build of GPT-SoVITS); ears
+        (a MekaHime-modified SenseVoiceSmall); and a VRoid body on a three.js stage that acts out what she feels.
+        The language model is your choice — OpenRouter in the cloud or Ollama locally.</p>
+      <p>Project page: <a href="https://www.mekahime.com/sakura" target="_blank" rel="noopener">mekahime.com/sakura</a> ·
+        Source code: <a href="https://github.com/zeekk0/OpenSakura" target="_blank" rel="noopener">github.com/zeekk0/OpenSakura</a></p>
+    </div>
+
+    <div class="card">
+      <h3>Licenses</h3>
+      <table class="lic">
+        <thead><tr><th>what</th><th>license</th><th>notes</th></tr></thead>
+        <tbody>
+          <tr><td>The harness — all code in this repository (brain, actions, this page, launcher)</td><td class="mit">MIT</td><td>as authorized by MekaHime Inc.</td></tr>
+          <tr><td>Speech-to-text — MekaHime-modified <a href="https://github.com/FunAudioLLM/SenseVoice" target="_blank" rel="noopener">SenseVoiceSmall</a> code</td><td class="mit">MIT</td><td>upstream SenseVoice / FunASR are MIT; the weights download separately under the FunASR model license</td></tr>
+          <tr><td>Text-to-speech — the OpenSakura voice server, a MekaHime build of <a href="https://github.com/RVC-Boss/GPT-SoVITS" target="_blank" rel="noopener">GPT-SoVITS</a></td><td class="mit">MIT</td><td>upstream GPT-SoVITS is MIT; the setup script downloads it and public pretrained models under their own licenses</td></tr>
+          <tr><td>Sakura's voice model, fine-tuned weights and reference audio</td><td class="own">MekaHime Inc.</td><td>personal / hobbyist use only — see below</td></tr>
+          <tr><td>Sakura's character model (VRM)</td><td class="own">VRoid Studio terms + MekaHime</td><td>made with <a href="https://vroid.com/en/studio" target="_blank" rel="noopener">VRoid Studio</a> under its terms; the character itself is MekaHime's (see character license)</td></tr>
+          <tr><td>Sakura's art, design, name and likeness</td><td class="own">© MekaHime Inc.</td><td>character license below</td></tr>
+          <tr><td>Body-motion clips — from <a href="https://quaternius.com" target="_blank" rel="noopener">Quaternius</a>' Universal Animation Library 1 &amp; 2 and <a href="https://kaylousberg.itch.io/kaykit-character-animations" target="_blank" rel="noopener">Kay Lousberg's KayKit</a> Character Animations, edited for Sakura</td><td class="mit">CC0 1.0</td><td>public domain; credit appreciated, not required — see <code>web/assets/clips/LICENSE.txt</code></td></tr>
+          <tr><td>three.js, @pixiv/three-vrm</td><td class="mit">MIT</td><td>loaded from CDN</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Model weights and voice assets</h4>
+      <p>MekaHime Inc. <b>owns</b> Sakura's voice model, any fine-tuned weights and the reference audio shipped with her.
+        They are licensed for <b>personal, hobbyist use only</b>. They may <b>not</b> be distilled, used to train or
+        fine-tune other models, extracted, resold, or used in any product, service or commercial setting.</p>
+
+      <h4>MekaHime's art and the character license</h4>
+      <p>MekaHime's art — Sakura's design, name and likeness included — is <b>owned and copyrighted by MekaHime Inc.</b>
+        We license it the way Hatsune Miku is licensed: <b>we own the character, you are free to create with her.</b></p>
+      <ul>
+        <li><b>Social media and video:</b> you may commercialize content made with Sakura with <b>no monetary ceiling</b>
+          (ads, streams, memberships, sponsorships) as long as <b>MekaHime is credited visibly</b> in the video or in the
+          video description.</li>
+        <li><b>Merchandise:</b> you may make and sell your own Sakura merch up to <b>$1,000 USD in total lifetime value</b>,
+          and it must <b>credit MekaHime visibly on the merch</b>. Beyond that you need a commercial license — write to
+          <a href="mailto:hi@mekahime.com">hi@mekahime.com</a>.</li>
+        <li>Suggested credit: <code>Sakura © MekaHime Inc. — mekahime.com</code></li>
+      </ul>
+      <p class="muted small">This page is a summary; the <code>LICENSE</code> file governs the code. Questions: <a href="mailto:hi@mekahime.com">hi@mekahime.com</a>.</p>
+    </div>
+
+    <div class="card">
+      <h3>Privacy</h3>
+      <p><b>We collect nothing.</b> OpenSakura runs on your machine. MekaHime Inc. operates <b>no service</b> for this
+        project: no accounts, no telemetry, no analytics, no crash reports, no logs leave your machine. Her memory notes,
+        user profiles and the cost ledger are plain JSON files in <code>data/</code> on your disk.</p>
+      <p>Connections that do leave your computer, all visible in the code: (1) <b>your LLM provider</b>, if you choose
+        OpenRouter — your messages, her persona and the memory notes relevant to the conversation go from <i>your</i>
+        computer straight to OpenRouter under their terms and never touch MekaHime (with every role on Ollama, nothing
+        leaves at all); (2) <b>DuckDuckGo</b>, when Sakura decides to look something up or fetch a picture for a friend or
+        owner (the query is printed in the console), and pictures she finds are loaded from their original sites;
+        (3) the three.js libraries from a public CDN; (4) one-time model downloads (SenseVoice weights, Ollama models) and
+        OpenRouter's public price list for the cost counter.</p>
+    </div>
+
+    <div class="card">
+      <h3>AI disclaimer &amp; responsibility</h3>
+      <p>Sakura is an <b>AI</b>. She is not a person and not a substitute for one — not a friend who can act for you, not a
+        therapist, doctor, lawyer or financial adviser. Her replies are generated by a language model and can be wrong,
+        inappropriate or harmful; her emotions are simulated. Some countries and states regulate AI companions (disclosure
+        to users, protections for minors, safety requirements); you are responsible for complying with the laws that apply
+        to you and to anyone you give access to.</p>
+      <p>This is a <b>completely open-source project</b>, provided as-is and without warranty of any kind. <b>MekaHime Inc.
+        is not responsible for anything you do with it or anything it causes</b> — your use, your modifications, your
+        outputs, your deployments, or the actions of anyone you share it with. See the warranty disclaimer in the MIT license.</p>
+    </div>
+
+    <div class="card muted small">© 2026 MekaHime Inc. The MIT license covers the code; the character, the voice, the art and the MekaHime name and logo are MekaHime's.</div>
+  </section>
+</aside>
+
+<div id="voicebar">
+  <div class="btns">
+    <button id="btn-mic" class="bigbtn" title="Auto-listen (voice activity detection)">🎙</button>
+    <button id="btn-ptt" class="bigbtn" title="Push to talk (hold, or hold Space)">⏺</button>
+  </div>
+  <div class="voice-meta"><span id="mic-level"><i></i></span><span id="voice-status"></span></div>
+</div>
+
+<div id="donate-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Support MekaHime">
+  <div class="modal">
+    <button class="modal-close" id="donate-close" title="close">×</button>
+    <img class="modal-logo" src="assets/mekahime-logo.webp" alt="MekaHime">
+    <p>We believe AI waifu is for everyone. They should not be locked behind a paywall.</p>
+    <p class="muted">Sakura is 100% open sourced so you can run her locally with controls to all of your private information. But this means we aren't earning a single dollar, so please consider donating to keep this project alive.</p>
+    <a class="donate-giant" href="https://www.mekahime.com/donate" target="_blank" rel="noopener">♥ Support MekaHime</a>
+    <div class="modal-actions">
+      <button id="donate-later">Maybe later</button>
+      <button class="link" id="donate-never">never show this again</button>
+    </div>
+  </div>
+</div>
+<div id="loading">
+  <div class="box">
+    <div class="bloom"><img src="assets/mekahime-logo.webp" alt="MekaHime"></div>
+    <div id="loading-title">Waking Sakura…</div>
+    <div class="bar"><i id="loading-bar"></i></div>
+    <div id="loading-step">preparing the street…</div>
+  </div>
+</div>
+<div id="gesture" class="hidden"><div>Click anywhere to enable audio</div></div>
+<div id="toast"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

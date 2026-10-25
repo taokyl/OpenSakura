@@ -1,0 +1,87 @@
+OpenSakura body-motion clips (web/assets/clips/*.glb)
+=====================================================
+
+License: CC0 1.0 Universal (public domain dedication)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Every clip in this folder is derived from animation libraries that their
+authors released under CC0 1.0, and was edited for OpenSakura.
+To the extent possible under law, MekaHime Inc. and the OpenSakura
+contributors dedicate their changes and the hand-keyed overlays in these
+files to the public domain under CC0 1.0. You may copy, modify and use them
+for any purpose, commercial or not, without asking permission. Attribution
+is not required; credit to the original authors is appreciated.
+
+
+Sources
+-------
+
+1. Universal Animation Library (Standard) and Universal Animation Library 2
+   (Standard) by Quaternius - https://quaternius.com
+   https://quaternius.itch.io/universal-animation-library
+   https://quaternius.itch.io/universal-animation-library-2
+   https://quaternius.com/packs/universalanimationlibrary.html
+   Earlier versions, also published by the author on OpenGameArt (CC0):
+     https://opengameart.org/content/universal-animation-library
+     https://opengameart.org/content/universal-animation-library-2
+   Obtained 2026-10-24 from the free Standard tiers on itch.io, which list the
+   packs as "(CC0 License)":
+     Universal Animation Library[Standard].zip
+       SHA-256 cc73fc4e495b82958207316596317a3f40b9fa38065bde1027937452da537724
+     Universal Animation Library 2[Standard].zip
+       SHA-256 4008ea208a604773a2b2177d965f0f5d3195498b5bf838c3f5785d68e95f2a68
+   License.txt inside both zips (excerpt: separator and blank lines left out):
+     | License:
+     | CC0 1.0 Universal (CC0 1.0)
+     | Public Domain Dedication
+     | https://creativecommons.org/publicdomain/zero/1.0/
+     | Models by @Quaternius
+     | Consider supporting me on Patreon!
+     | https://www.patreon.com/quaternius
+
+2. KayKit Character Animations 1.1 (free tier) by Kay Lousberg
+   https://kaylousberg.itch.io/kaykit-character-animations
+   Obtained 2026-10-24:
+     KayKit_Character_Animations_1.1.zip
+       SHA-256 65882f31f905ad2e953819648a59287cdeab8f623908d5ef701971d3758be20f
+   License.txt inside the zip (excerpt: the license paragraph; the title,
+   credits and links around it left out):
+     | License: (Creative Commons Zero, CC0)
+     | http://creativecommons.org/publicdomain/zero/1.0/
+     | This content is free to use in personal, educational and commercial projects.
+     | You can support me by purchasing an asset pack at the EXTRA or SOURCE tiers, leaving a donation/tip on itch.io, or joining my Patreon.
+     | If you wish to credit me you can do so by crediting "Kay Lousberg, www.kaylousberg.com" (this is not mandatory)
+
+
+Where each clip comes from
+--------------------------
+
+Idle.glb       (breathing, Waiting)  UAL1  Idle_Loop
+Talk.glb                             UAL1  Idle_Talking_Loop
+Dance.glb                            UAL1  Dance_Loop x4 + hand-keyed overlay
+                                           (slow turn, a fist pump per side)
+FoldArms.glb                         UAL2  Idle_FoldArms_Loop (arms lifted
+                                           slightly off the chest)
+Yes.glb                              UAL2  Yes
+ShakeHead.glb                        UAL2  Idle_No_Loop
+Pout.glb                             UAL2  Idle_FoldArms_Loop (arms lifted
+                                           slightly) + hand-keyed head turn
+Wave.glb                             KayKit Waving
+Yay.glb                              KayKit Cheering (trimmed to its arms-up loop)
+Think.glb, Idea.glb, Shy.glb, Laugh.glb, Sad.glb, Cry.glb, Bow.glb,
+Surprised.glb, Angry.glb, HandsOnHips.glb, LeanIn.glb, OpenArms.glb,
+Point.glb, LookAround.glb, Stretch.glb, WaveSmall.glb, Hop.glb
+                                     UAL1  Idle_Loop + hand-keyed overlay
+                                     (arms, hands, spine, head; made for OpenSakura)
+
+
+Changes made to the source animations
+-------------------------------------
+
+- one animation per file; skeleton only (mesh, skin, materials removed);
+  resampled at 30 fps; leaf/helper joints, scale and constant channels dropped
+- standing clips: body turned to face forward, feet moved to a narrow stance
+  with leg IK (knee bend kept), clenched fists relaxed
+- KayKit clips: resting arms lowered toward the body; legs re-posed for her
+  proportions (feet planted flat under the hips, pelvis level, knees softly bent)
+- hand-keyed overlays layered on the source motion as described above

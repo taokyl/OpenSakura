@@ -1,0 +1,51 @@
+{
+  "mode": "web",
+  "persona_file": "config/sakura.json",
+  "owner": { "name": "Master", "user_ids": [] },
+  "llm": {
+    "roles": { "actor": "openrouter", "director": "openrouter", "action": "openrouter", "mod": "openrouter" },
+    "openrouter": {
+      "actor_model": "google/gemini-2.5-flash",
+      "director_model": "google/gemini-2.5-flash",
+      "action_model": "google/gemini-2.5-flash",
+      "mod_model": "google/gemini-2.5-flash",
+      "site_url": "https://github.com/zeekk0/OpenSakura",
+      "app_name": "OpenSakura"
+    },
+    "ollama": {
+      "url": "http://127.0.0.1:11434",
+      "actor_model": "qwen3:8b",
+      "director_model": "qwen3:8b",
+      "action_model": "qwen3:8b",
+      "mod_model": "qwen3:8b",
+      "num_ctx": 8192,
+      "think": false
+    }
+  },
+  "stt": { "enabled": true, "autostart": true, "url": "http://127.0.0.1:50000", "lang": "auto", "device": "cuda:0" },
+  "tts": {
+    "enabled": true,
+    "autostart": true,
+    "url": "http://127.0.0.1:8002",
+    "engine_dir": "vendor/tts-engine",
+    "character_id": "MekaHime_Sakura",
+    "language": "English",
+    "audio_format": "wav",
+    "timeout_s": 45
+  },
+  "actions": { "enabled": true, "followup": true },
+  "reply": {
+    "output_in_chat": true,
+    "output_in_voice": true,
+    "safety_filter": true,
+    "show_ai_disclaimer": false,
+    "intimacy_mode": true,
+    "respond_to_text": true,
+    "respond_to_voice": true,
+    "discord_trigger": "smart",
+    "respond_to_bots": false
+  },
+  "memory": { "consolidation_interval": 4 },
+  "server": { "host": "127.0.0.1", "port": 8010, "open_browser": true },
+  "discord": { "guild_id": "", "channel_ids": [], "stage_channel_id": "", "error_channel_id": "" }
+}

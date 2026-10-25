@@ -1,0 +1,12 @@
+# STT service (services/stt): what api.py and model.py import.
+# torch / torchaudio: on Windows + RTX 50-series, scripts/setup_windows.ps1 installs the CUDA 12.8
+# builds from the PyTorch index first; pip then keeps them.
+torch
+torchaudio
+funasr>=1.1.3
+fastapi
+uvicorn
+python-multipart
+soundfile
+numpy
+typing_extensions
