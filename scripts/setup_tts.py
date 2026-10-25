@@ -5,7 +5,8 @@
 
     python scripts/setup_tts.py                      # NVIDIA GPU on Windows / Linux (CUDA 12.8 torch)
     python scripts/setup_tts.py --cpu                # no GPU: CPU torch (slow, for testing)
-    python scripts/setup_tts.py --hf-token hf_xxx    # or HF_TOKEN=..., or `hf auth login` beforehand
+    python scripts/setup_tts.py --hf-token hf_xxx    # or HF_TOKEN=..., or `hf auth login`; without any of them it
+                                                     # asks for the token (hidden) when run in a console
     python scripts/setup_tts.py --skip-voice         # everything except the gated voice download
     python scripts/setup_tts.py --self-test          # also start the server once and synthesize a line
 
@@ -39,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import errno
+import getpass
 import hashlib
 import http.client
 import json
@@ -928,6 +930,27 @@ def check_voice(d: Path, ver: Verified) -> tuple[bool, Optional[bool], str]:
     return True, pinned, "; ".join(notes)
 
 
+def saved_hf_login() -> bool:
+    """True when `hf auth login` has stored a token where huggingface_hub looks for it."""
+    if os.environ.get("HF_TOKEN_PATH"):
+        return Path(os.environ["HF_TOKEN_PATH"]).expanduser().is_file()
+    cache = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache")
+    return (Path(os.environ.get("HF_HOME") or cache / "huggingface").expanduser() / "token").is_file()
+
+
+def ask_hf_token(gate: str) -> Optional[str]:
+    """Ask for a Hugging Face token on an interactive console (input hidden, used for this run only)."""
+    print(f"\n[voice] Sakura's voice is free, but the download is gated. Once:\n"
+          f"          1) open {gate} while logged in to Hugging Face, tick the boxes and click 'I agree'\n"
+          f"          2) create a token with the 'Read' role at {HF}/settings/tokens\n", flush=True)
+    try:
+        tok = getpass.getpass("[voice] paste the token here (hidden; Enter skips the voice for now): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print(flush=True)
+        return None
+    return tok or None
+
+
 def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verified) -> None:
     dest = engine / "Speakers" / VOICE_ID
     gate = f"{HF}/{VOICE_REPO}"
@@ -968,7 +991,7 @@ def ensure_voice(engine: Path, vpy: Path, args: argparse.Namespace, ver: Verifie
         msg = {3: "access not granted yet", 4: "not logged in or no access", 5: "network / HTTP error"}.get(
             p.returncode, f"exit code {p.returncode}")
         row("!! ", name, f"download failed ({msg}). 1) open {gate} while logged in and click "
-            "'Agree and access repository'; 2) log in here: `hf auth login` (or set HF_TOKEN, or pass --hf-token); "
+            "'I agree'; 2) log in here: `hf auth login` (or set HF_TOKEN, or pass --hf-token); "
             "3) re-run this script")
         return
     good, pinned, why = check_voice(dest, ver)
@@ -1152,7 +1175,7 @@ def main() -> int:
     ap.add_argument("--voice-revision", default=VOICE_REV,
                     help=f"revision of {VOICE_REPO} (default: the pinned {VOICE_REV[:8]}, whose weights are checked "
                          "by SHA-256)")
-    ap.add_argument("--hf-token", default=None, help="Hugging Face token (default: HF_TOKEN or the cached hf login)")
+    ap.add_argument("--hf-token", default=None, help="Hugging Face token (default: HF_TOKEN or the cached hf login; else asked for in a console)")
     ap.add_argument("--skip-ffmpeg", action="store_true")
     ap.add_argument("--reinstall", action="store_true", help="re-run the pip steps even if nothing changed")
     ap.add_argument("--keep-downloads", action="store_true", help="keep the zip archives in downloads/")
@@ -1173,6 +1196,10 @@ def main() -> int:
         log(f"WARNING: {engine} is {len(str(engine))} characters long and Windows long paths are off: files deep in the "
             "venv and the GPT-SoVITS tree can pass the 260-character limit. Use a shorter folder, or enable "
             "LongPathsEnabled (HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem) and re-run")
+    voice_missing = args.update_voice or not (engine / "Speakers" / VOICE_ID / "character.json").is_file()
+    if (voice_missing and not (args.skip_voice or args.voice_from) and sys.stdin.isatty()
+            and not (args.hf_token or os.environ.get("HF_TOKEN") or saved_hf_login())):
+        args.hf_token = ask_hf_token(f"{HF}/{VOICE_REPO}")    # asked first, so the long install can run unattended
     t0 = time.time()
     rc = 0
     steps = Steps()

@@ -35,7 +35,7 @@ it loads upstream; should a different upstream need ffmpeg for speed and none is
 
 **Sakura's voice** is the gated Hugging Face repository
 [MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura). Open that page while
-logged in to Hugging Face, accept the personal-use license ("Agree and access repository"), then give the
+logged in to Hugging Face, accept the personal-use license (tick the boxes, "I agree"), then give the
 script a token in one of three ways: `hf auth login` once (any `huggingface_hub` install works, including
 `vendor/tts-engine/.venv/Scripts/hf` (Windows) or `.venv/bin/hf` after a first run), `HF_TOKEN=hf_...`, or
 `--hf-token hf_...`. The token

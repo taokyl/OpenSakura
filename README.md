@@ -1,4 +1,13 @@
-# OpenSakura 🌸
+<p align="center">
+  <a href="https://www.mekahime.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/images/mekahime-logo-white.png">
+      <img src="docs/images/mekahime-logo-card.png" alt="MekaHime" width="320">
+    </picture>
+  </a>
+</p>
+
+<h1 align="center">OpenSakura 🌸</h1>
 
 Sakura is MekaHime's first prototype companion — a mood, a memory, a voice and a body —
 now open source. Talk to her in a web page (mic or text) where a three.js avatar acts out
@@ -60,27 +69,81 @@ how to spend less.
   **Python 3.11 or 3.12** (on Ubuntu 22.04 install `python3.11` and `python3.11-venv`).
 - Voice modes: Windows 10/11 with an NVIDIA GPU (RTX 50-series needs CUDA 12.8 wheels — the setup scripts
   install them). Linux (glibc 2.28+, e.g. Ubuntu 20.04+) and macOS 14+ on Apple Silicon with a native arm64
-  Python should work the same way but are untested. ffmpeg is only needed for Opus output (WAV is the default). `scripts/setup_tts.py` builds the voice server from public sources and downloads
-  Sakura's voice from the gated Hugging Face repo
-  [MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura): accept its
-  personal-use license there and log in with `hf auth login` (or pass `--hf-token`) — `vendor/tts-engine/README.md`
+  Python should work the same way but are untested. ffmpeg is only needed for Opus output (WAV is the default).
+- A free [Hugging Face](https://huggingface.co/join) account, for Sakura's voice (step 1 below).
 - An [OpenRouter](https://openrouter.ai) key **or** [Ollama](https://ollama.com) with a model (`ollama pull qwen3:8b`)
 
-## Quick start
+## Quick start: talk to her out loud
+
+Her voice is the heart of Sakura, so set it up first. This is for Windows 10/11 with an NVIDIA RTX GPU and
+takes about 20–30 minutes, most of it downloads (~12 GB). You need [Python 3.11](https://www.python.org/downloads/release/python-3119/)
+(tick **Add python.exe to PATH** in the installer) and [Git](https://git-scm.com/download/win).
+
+**1. Unlock her voice (free, once, about 2 minutes).** Sakura's voice model is a MekaHime asset hosted on
+Hugging Face behind a click-through license (personal use, 18+).
+
+1. Make a free account at [huggingface.co/join](https://huggingface.co/join) and verify your email.
+2. While logged in, open **[huggingface.co/MekaHime/MekaHime_Sakura](https://huggingface.co/MekaHime/MekaHime_Sakura)**,
+   read the terms, tick the three boxes and click **I agree**. Access is granted instantly.
+3. Open [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) → **Create new token** →
+   token type **Read** → **Create token**, and copy it (it starts with `hf_`). Keep it private.
+
+**2. Install her (ears, voice and brain).** In PowerShell:
 
 ```powershell
-git clone https://github.com/zeekk0/OpenSakura.git && cd OpenSakura
-powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1   # venvs, cu128 torch, STT weights
-python scripts\setup_tts.py     # the voice: GPT-SoVITS + models + Sakura's voice (~9 GB, asks for your Hugging Face login)
-python launch.py --check
-Start_OpenSakura.bat            # → http://localhost:8010
+git clone https://github.com/zeekk0/OpenSakura.git
+cd OpenSakura
+powershell -ExecutionPolicy Bypass -File scripts\setup_windows.ps1   # her brain and ears (speech recognition)
+python scripts\setup_tts.py                                          # her voice: paste your hf_ token when asked
 ```
+
+`setup_tts.py` asks for the token first (the input is hidden and it is not saved), then installs on its own.
+It ends with a summary; the line that matters is
+
+```
+  OK voice MekaHime_Sakura  ...\Speakers\MekaHime_Sakura (downloaded from MekaHime/MekaHime_Sakura@...; 68/68 emotion tags with a clip; ...)
+```
+
+If that row says `!!`, see [Voice troubleshooting](#voice-troubleshooting) and run the same command again: finished
+steps are verified and skipped, so a re-run takes seconds.
+
+**3. Give her a brain.** Either put your [OpenRouter](https://openrouter.ai) key in Setup (next step) — about
+$0.003 per turn, fastest replies, see [`docs/OPENROUTER.md`](docs/OPENROUTER.md) — or run her fully local and free
+with [Ollama](https://ollama.com): `ollama pull qwen3:8b`, then in Setup point the four LLM roles at Ollama.
+
+**4. Start her and say hi.**
+
+```powershell
+.venv\Scripts\python launch.py --check   # ends with "result: ready"; look for "OK tts speaker MekaHime_Sakura"
+Start_OpenSakura.bat                       # starts her ears, her voice and her brain, opens http://localhost:8010
+```
+
+The first start takes about 30 seconds while her voice warms up. In the page: **Setup** → paste your
+OpenRouter key (or switch the roles to Ollama) and check the Health grid: the **STT** and **TTS** rows and your
+brain (OpenRouter or Ollama) should be green (Discord stays red until Discord mode exists). Then **Play** → click 🎙 and just talk (hands-free, voice activity detection), or hold ⏺ or **Space** to
+push-to-talk, or type. She answers out loud with the emotion she feels (`【shy1】`, `【happy2】`, …) and acts it out.
+Left-drag orbits, wheel zooms, right-drag up/down slides the focus from her head to her shoes; the ❯ tab hides
+the panel.
+
+### Voice troubleshooting
+
+| what you see | fix |
+|---|---|
+| `!! voice MekaHime_Sakura ... access not granted yet` | Step 1.2: open the [voice page](https://huggingface.co/MekaHime/MekaHime_Sakura) **with the same account** the token belongs to and tick the boxes and click **I agree**, then re-run `python scripts\setup_tts.py`. |
+| `... not logged in or no access` | The token is missing or wrong. Re-run and paste it again, or pass it: `python scripts\setup_tts.py --hf-token hf_...` (or `hf auth login` once). |
+| `the voice engine needs Python 3.11 or 3.12` | Install [Python 3.11](https://www.python.org/downloads/release/python-3119/), then re-run (or `--python <path to python.exe>`). |
+| she replies in text but you hear nothing | `launch.py --check` and the Setup Health grid must show **TTS** green; give her ~30 s after starting; make sure **play voice** is ticked in Play; click the page once so the browser allows sound; on Safari keep the WAV format. |
+| she sounds cut off or very slow | Close other GPU-heavy apps. Fully local with the 8B model needs ~16 GB of VRAM; on 8–12 GB cards use `qwen3:4b` or OpenRouter. |
+
+More detail (flags, what gets installed where, updating her voice with `--update-voice`): [`vendor/tts-engine/README.md`](vendor/tts-engine/README.md).
+
+### Other setups
 
 On Linux (untested so far), `python3 scripts/setup_tts.py` installs the voice the same way; the
 speech-recognition service is set up by hand there (`services/stt/README.md`), or run
 `python launch.py --no-stt` and type.
 
-Text-only, on any OS (no GPU, no voice):
+Text-only, on any OS (no GPU, **no voice**: she is much less herself this way):
 
 ```bash
 git clone https://github.com/zeekk0/OpenSakura.git && cd OpenSakura
@@ -89,11 +152,6 @@ pip install -r requirements.txt
 cp .env.example .env                               # put your OpenRouter key on the OPENROUTER_API_KEY= line
 python launch.py --text-only                       # → http://localhost:8010
 ```
-
-In the page: **Setup** → paste your OpenRouter key (or point the roles at Ollama), check the health
-grid is green, pick the voice, save. **Play** → 🎙 for hands-free (voice activity detection), hold
-⏺ or **Space** to push-to-talk, or type. Left-drag orbits, wheel zooms, right-drag up/down slides the
-focus from her head to her shoes; the ❯ tab hides the panel.
 
 ## Modes
 
