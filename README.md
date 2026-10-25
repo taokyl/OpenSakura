@@ -100,9 +100,15 @@ streams with her. `setup_tts.py` shows this first and asks you to type `yes`, th
 If that row says `!!`, see [Voice troubleshooting](#voice-troubleshooting) and run the same command again: finished
 steps are verified and skipped, so a re-run takes seconds.
 
-**2. Give her a brain.** Either put your [OpenRouter](https://openrouter.ai) key in Setup (next step) — about
-$0.003 per turn, fastest replies, see [`docs/OPENROUTER.md`](docs/OPENROUTER.md) — or run her fully local and free
-with [Ollama](https://ollama.com): `ollama pull qwen3:8b`, then in Setup point the four LLM roles at Ollama.
+**2. Give her a brain.** Pick one:
+
+- **OpenRouter (cloud, fastest, about $0.003 per turn).** Make an account at [openrouter.ai](https://openrouter.ai),
+  add a few dollars of credit and create a key at [openrouter.ai/keys](https://openrouter.ai/keys). Open the `.env`
+  file in the OpenSakura folder (`notepad .env`; the setup script created it) and put the key after
+  `OPENROUTER_API_KEY=`. You can also paste it later in the page under **Setup → LLM**. Model choice and costs:
+  [`docs/OPENROUTER.md`](docs/OPENROUTER.md).
+- **Ollama (fully local, free).** See [Fully local with Ollama](#fully-local-with-ollama) below: install Ollama,
+  `ollama pull qwen3:8b` (or `qwen3:4b` on an 8–12 GB card), then point her four LLM roles at it in **Setup → LLM**.
 
 **3. Start her and say hi.**
 
@@ -111,9 +117,11 @@ with [Ollama](https://ollama.com): `ollama pull qwen3:8b`, then in Setup point t
 Start_OpenSakura.bat                       # starts her ears, her voice and her brain, opens http://localhost:8010
 ```
 
-The first start takes about 30 seconds while her voice warms up. In the page: **Setup** → paste your
-OpenRouter key (or switch the roles to Ollama) and check the Health grid: the **STT** and **TTS** rows and your
-brain (OpenRouter or Ollama) should be green (Discord stays red until Discord mode exists). Then **Play** → click 🎙 and just talk (hands-free, voice activity detection), or hold ⏺ or **Space** to
+`--check` marks real problems `!!`. A missing OpenRouter key shows as `--` (informational), because you can still
+paste it in Setup. `Start_OpenSakura.bat` prints `STT ready`, `TTS ready` and finally `ready → http://…`; the
+first start takes about 30 seconds while her voice warms up. In the page, **Setup** shows the Health grid: the
+**STT** and **TTS** rows and your brain (OpenRouter or Ollama) should be green (Discord stays red until Discord mode
+exists). Then **Play** → click 🎙 and just talk (hands-free, voice activity detection), or hold ⏺ or **Space** to
 push-to-talk, or type. She answers out loud with the emotion she feels (`【shy1】`, `【happy2】`, …) and acts it out.
 Left-drag orbits, wheel zooms, right-drag up/down slides the focus from her head to her shoes; the ❯ tab hides
 the panel.
@@ -125,10 +133,39 @@ the panel.
 | `!! voice MekaHime_Sakura  not downloaded: her voice license was not accepted` | Re-run `python scripts\setup_tts.py` and type `yes` when it asks. |
 | `!! voice MekaHime_Sakura  download failed (network / HTTP error)` | Check your internet connection (Hugging Face must be reachable) and re-run; finished steps are skipped. |
 | `the voice engine needs Python 3.11 or 3.12` | Install [Python 3.11](https://www.python.org/downloads/release/python-3119/), then re-run (or `--python <path to python.exe>`). |
+| `!! ollama model qwen3:8b  missing → ollama pull qwen3:8b` | Run that `ollama pull` command, or switch the roles to a model you have in **Setup → LLM**. |
+| `!! ollama  not answering at http://127.0.0.1:11434` | Start Ollama (or install it from [ollama.com/download](https://ollama.com/download)), or switch the roles back to OpenRouter. |
 | she replies in text but you hear nothing | `launch.py --check` and the Setup Health grid must show **TTS** green; give her ~30 s after starting; make sure **play voice** is ticked in Play; click the page once so the browser allows sound; on Safari keep the WAV format. |
 | she sounds cut off or very slow | Close other GPU-heavy apps. Fully local with the 8B model needs ~16 GB of VRAM; on 8–12 GB cards use `qwen3:4b` or OpenRouter. |
 
 More detail (flags, what gets installed where, updating her voice with `--update-voice`): [`vendor/tts-engine/README.md`](vendor/tts-engine/README.md).
+
+### Fully local with Ollama
+
+Her brain can run on your own GPU too, so nothing leaves your PC and nothing costs money.
+
+1. Install Ollama for Windows from [ollama.com/download](https://ollama.com/download) and start it (it runs in the
+   background on port 11434; the tray icon shows it is up).
+2. Download a model in PowerShell. The 8B model needs about 16 GB of video memory next to her ears and voice; on an
+   8–12 GB card use the 4B model:
+
+   ```powershell
+   ollama pull qwen3:8b     # 16 GB VRAM or more
+   ollama pull qwen3:4b     # 8–12 GB VRAM
+   ```
+
+   (Setup → LLM also has a **Pull** box that does the same.)
+3. Start her (`Start_OpenSakura.bat`), open **Setup → LLM**, and in the roles table set **provider** to **Ollama** for
+   all four roles (actor, director, action, mod). Check that the **Ollama model** column names the model you
+   pulled (`qwen3:8b` by default; type `qwen3:4b` if you pulled that one), then click **Save LLM**. The Health
+   grid's **Ollama** row turns green and the **LLM roles** row reads `actor:ollama director:ollama …`.
+4. Say hi in **Play**. From now on `launch.py --check` also checks that Ollama answers and that every model the
+   roles use is pulled (`!! ollama model … missing → ollama pull …` tells you what to download).
+
+Measured on an RTX 5070 (12 GB) with everything on that one card: `qwen3:8b` replies in about 7.6 s with her voice
+ready after about 12 s, because the model, her ears and her voice don't all fit in 12 GB; `qwen3:4b` replies in
+about 1.6 s (voice about 5 s). Smaller models also keep her personality less steadily. OpenRouter is the fastest
+option if your GPU is small.
 
 ### Other setups
 

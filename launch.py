@@ -256,6 +256,36 @@ def tts_rows(note: str, required: bool) -> list[tuple[str, bool, str, bool]]:
     return rows
 
 
+ROLES = ("actor", "director", "action", "mod")
+
+
+def brain_rows() -> list[tuple[str, bool, str, bool]]:
+    """--check rows for her brain. An OpenRouter key can still be pasted in Setup after the
+    start, so a missing one is informational; with roles on Ollama, Ollama must answer and
+    every model the roles use must be pulled."""
+    roles = settings.get("llm.roles") or {}
+    rows: list[tuple[str, bool, str, bool]] = []
+    if any(roles.get(r, "openrouter") == "openrouter" for r in ROLES):
+        key = bool(settings.secret("OPENROUTER_API_KEY"))
+        rows.append(("OPENROUTER_API_KEY", key, "set" if key else
+                     "not set yet: paste it in Setup after starting, or put it in .env (or switch the roles to Ollama)", False))
+    else:
+        rows.append(("OPENROUTER_API_KEY", True, "not needed (every role uses Ollama)", False))
+    wanted = sorted({str(settings.get(f"llm.ollama.{r}_model") or "") for r in ROLES if roles.get(r) == "ollama"} - {""})
+    if wanted:
+        url = str(settings.get("llm.ollama.url")).rstrip("/")
+        try:
+            with urllib.request.urlopen(url + "/api/tags", timeout=3) as r:
+                have = {m.get("name", "") for m in json.load(r).get("models", [])}
+        except Exception:  # noqa: BLE001
+            rows.append(("ollama", False, f"not answering at {url}: install it from ollama.com and start it", True))
+            return rows
+        for m in wanted:
+            pulled = m in have or f"{m}:latest" in have
+            rows.append((f"ollama model {m}", pulled, "pulled" if pulled else f"missing → ollama pull {m}", True))
+    return rows
+
+
 def check() -> int:
     """Print one row per prerequisite. Rows for a disabled service (and live:* probes) are
     informational: a miss prints "--" and does not fail the check. So is the server port when
@@ -272,7 +302,7 @@ def check() -> int:
         except ImportError:
             rows.append((f"pip:{mod}", False, "missing → pip install -r requirements.txt", True))
     rows.append(("config/sakura.json", settings.path("persona_file").exists(), str(settings.path("persona_file")), True))
-    rows.append(("OPENROUTER_API_KEY", bool(settings.secret("OPENROUTER_API_KEY")), "set" if settings.secret("OPENROUTER_API_KEY") else "not set (needed unless every role uses ollama)", True))
+    rows.extend(brain_rows())
     rows.append(("DISCORD_BOT_TOKEN", True, "set" if settings.secret("DISCORD_BOT_TOKEN") else "not set (web mode only)", True))
     stt_note = "" if stt_on else "  (STT disabled)"
     tts_note = "" if tts_on else "  (TTS disabled)"
@@ -300,6 +330,11 @@ def check() -> int:
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        try:  # messages can be non-ASCII; never die on a cp1252 console or a redirected log file
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001
+            pass
     ap = argparse.ArgumentParser(description="OpenSakura launcher")
     ap.add_argument("--check", action="store_true", help="validate the install and exit (honours --no-stt/--no-tts/--text-only)")
     ap.add_argument("--no-stt", action="store_true", help="do not start or use speech recognition")
@@ -336,7 +371,7 @@ def main() -> int:
         procs.append(("TTS", settings.get("tts.url") + "/ping", start_tts(), 420))
 
     def _open() -> None:
-        if wait_for(f"http://{host}:{port}/api/state", "OpenSakura", 60):
+        if wait_for(f"http://{host}:{port}/api/state", "web server", 60):
             for what, url, p, to in procs:
                 if p is not None:
                     wait_for(url, what, to, p)

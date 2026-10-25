@@ -39,7 +39,7 @@ It is under MekaHime's personal-use license (`LICENSE` in that repository: perso
 training on it, no re-hosting or resale, visible credit): the script shows it in short before anything else and
 downloads the voice only after you type `yes`; `--accept-voice-license` accepts it up front for unattended
 installs. Without it the script finishes everything else and says how to get the voice. The voice is downloaded
-at a pinned revision of that repository (`b047e59c`, 68 emotion tags) and its two weight files are checked by
+at a pinned revision of that repository (`0fea0c88`, 68 emotion tags) and its two weight files are checked by
 size and SHA-256 like every other download.
 
 Re-running is safe: finished steps are verified (SHA-256) and skipped; a re-run of a complete install takes about

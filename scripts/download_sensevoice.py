@@ -16,6 +16,11 @@ DEST = Path(__file__).resolve().parent.parent / "services" / "stt" / "models" / 
 
 
 def main() -> int:
+    for stream in (sys.stdout, sys.stderr):
+        try:  # messages can be non-ASCII; never die on a cp1252 console or a redirected log file
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001
+            pass
     if DEST.exists() and DEST.stat().st_size > 800_000_000:
         print(f"already present: {DEST} ({DEST.stat().st_size/1e6:.0f} MB)")
         return 0

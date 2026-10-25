@@ -118,7 +118,7 @@ FFMPEG_LINUX_RELEASE = "https://api.github.com/repos/BtbN/FFmpeg-Builds/releases
 FFMPEG_LINUX_ASSET = re.compile(r"ffmpeg-n(\d+)\.(\d+)-latest-linux64-gpl-\1\.\2\.tar\.xz")
 
 VOICE_REPO, VOICE_ID = "MekaHime/MekaHime_Sakura", "MekaHime_Sakura"
-VOICE_REV = "b047e59cf536123a1e798732f5f99cb06f21eb2d"    # 2026-10-25: 68 emotion tags, each with its clip; ungated
+VOICE_REV = "0fea0c88d20f43d8d67b705b85d35cfd335ef819"    # 2026-10-25: v1.0, 68 emotion tags, each with its clip
 VOICE_WEIGHTS = {  # at VOICE_REV: file -> (size, sha256)
     "MekaHime_Sakura.ckpt": (155305457, "031e141af0c024186eedf65cc3c090b7737981651cd5a67533efcfe4a3b5741d"),
     "MekaHime_Sakura.pth": (172755891, "7511dc7abe4cab63c24fe3c9cf1039875ddce43cfc876d68fd75ee84564d98bb"),
