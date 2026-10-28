@@ -208,7 +208,7 @@ def main() -> int:
     else:
         print(f"  1. {py_cmd} scripts/setup_tts.py --device {tts_dev}   (her voice; type yes to accept her personal-use licence)")
         print("  2. give her a brain: an OpenRouter key in .env, or a local model (see docs/GETTING_STARTED.md)")
-        print(f"  3. {py_cmd} launch.py --check, then start: " + (r"Start_OpenSakura.bat" if IS_WIN else "./Start_OpenSakura.sh") + "  ->  http://localhost:8010")
+        print(f"  3. {py_cmd} launch.py --check, then start: Start_OpenSakura.bat -> http://localhost:8010")
     return 0
 
 

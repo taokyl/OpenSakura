@@ -20,7 +20,7 @@ Logs of every service are in the `logs/` folder (`stt.log`, `tts.log`); the newe
 | AMD GPU: `No matching distribution found for torch` with ROCm | The ROCm wheel tag changes with PyTorch releases. Look up the current one on pytorch.org and pass `--torch-index https://download.pytorch.org/whl/rocmX.Y`. |
 | macOS: voice setup says macOS too old | The voice engine needs macOS 14+ on Apple Silicon. Text-only mode works anywhere. |
 | model download fails | Hugging Face must be reachable. Re-run; or `python scripts/download_sensevoice.py`. |
-| `Permission denied` on `.sh` files | `chmod +x Start_OpenSakura.bat scripts/setup.bat` or run them with `bash`. |
+| `Permission denied` on `.bat` files | `chmod +x Start_OpenSakura.bat scripts/setup.bat` or run them with `bash`. |
 
 ## Starting
 
